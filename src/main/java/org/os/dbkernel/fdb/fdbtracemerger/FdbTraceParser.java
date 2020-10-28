@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.io.BufferedReader;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,18 +24,22 @@ public class FdbTraceParser implements Iterator<TraceEntry>, Closeable {
 
   private final Path tracePath;
   private final String source;
+  private final Instant timeFrom;
+  private final Instant timeTo;
 
   private BufferedReader bufferedReader = null;
   private XMLEventReader xmlReader = null;
   private TraceEntry nextEvent = null;
   private boolean isNotFinished = true;
 
-  public FdbTraceParser(final Path tracePath) {
+  public FdbTraceParser(final Path tracePath, final Parameters prms) {
     this.tracePath = tracePath;
     
     final String cs[] = tracePath.getFileName().toString().split("\\.");
     
     source = cs.length > 6 ? MessageFormat.format("{0}.{1}.{2}.{3}:{4}", cs[1], cs[2], cs[3], cs[4], cs[5]) : null;
+    timeFrom = prms.timeFrom;
+    timeTo = prms.timeTo;
   }
   
   private void assureNext() {
@@ -65,6 +70,11 @@ public class FdbTraceParser implements Iterator<TraceEntry>, Closeable {
 	      }
 	      if (nextEvent.time == null) {
 		nextEvent = null; // bad event
+	      } else if (timeFrom != null && nextEvent.time.compareTo(timeFrom) < 0) {
+		nextEvent = null; // too early
+	      } else if (timeTo != null && nextEvent.time.compareTo(timeTo) >= 0) {
+		nextEvent = null; // too late
+		isNotFinished = false;
 	      }
 	    }
 	  }

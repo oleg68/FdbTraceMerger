@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath org.os.dbkernel.fdb.fdbtracemerger.Main /home/oleg/work/fdb/log/01_usable_regions</exec.args>
+                <exec.args>-classpath %classpath org.os.dbkernel.fdb.fdbtracemerger.Main -from "2020-10-27 19:00:40" -to "2020-10-27 19:01:00" /home/oleg/work/fdb/logs/02_usable_regions</exec.args>
                 <exec.executable>java</exec.executable>
                 <exec.workingdir></exec.workingdir>
             </properties>
@@ -25,7 +25,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
             </goals>
             <properties>
-                <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath org.os.dbkernel.fdb.fdbtracemerger.Main /home/oleg/work/fdb/log/01_usable_regions</exec.args>
+                <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath org.os.dbkernel.fdb.fdbtracemerger.Main -from "2020-10-27 19:00:40" -to "2020-10-27 19:01:00" /home/oleg/work/fdb/logs/02_usable_regions</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
                 <exec.workingdir></exec.workingdir>
@@ -41,7 +41,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.5.0:exec</goal>
             </goals>
             <properties>
-                <exec.args>-classpath %classpath org.os.dbkernel.fdb.fdbtracemerger.Main /home/oleg/work/fdb/log/01_usable_regions</exec.args>
+                <exec.args>-classpath %classpath org.os.dbkernel.fdb.fdbtracemerger.Main -from "2020-10-27 19:00:40" -to "2020-10-27 19:01:00" /home/oleg/work/fdb/logs/02_usable_regions</exec.args>
                 <exec.executable>java</exec.executable>
                 <exec.workingdir></exec.workingdir>
             </properties>

@@ -3,6 +3,9 @@ package org.os.dbkernel.fdb.fdbtracemerger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +15,8 @@ import java.util.List;
 public class Parameters extends AbstractParameters {
   public static final int QUE_CAPACITY_DEFAULT = 1000;
   public static final String OUTPUT_PATH_DEFAULT = "-";
+  public static final DateTimeFormatter BASE_TIME_FORMATTER
+    = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSSSSS]");
   
   private final List<String> SRC_LIST_DEFAULT = Arrays.asList(new String[] {"."});
   
@@ -26,6 +31,12 @@ public class Parameters extends AbstractParameters {
     void consumeSwitch(final String sw) {
       if (sw.equals("o")) {
 	outputPath = checkNext(outputPath, sw);
+      } else if (sw.equals("from")) {
+	timeFromStr = checkNext(timeFromStr, sw);;
+      } else if (sw.equals("to")) {
+	timeToStr = checkNext(timeToStr, sw);;
+      } else if (sw.equals("help") || sw.equals("?")) {
+	isToHelp = true;
       } else if (sw.equals("tz")) {
 	if (timeZone != null) {
 	  throw new IllegalArgumentException("Duplicated " + sw);
@@ -34,8 +45,6 @@ public class Parameters extends AbstractParameters {
 	  throw new IllegalArgumentException("No value for " + sw);
 	}
 	timeZone = ZoneId.of(argsIter.next());
-      } else if (sw.equals("help") || sw.equals("?")) {
-	isToHelp = true;
       } else {
 	throw new IllegalArgumentException("Unknown switch " + sw);
       }
@@ -49,6 +58,11 @@ public class Parameters extends AbstractParameters {
   String outputPath = null;
   ZoneId timeZone = null;
   boolean isToHelp = false;
+  private String timeFromStr = null;
+  private String timeToStr = null;
+  DateTimeFormatter timeFormatter = null;
+  Instant timeFrom = null;
+  Instant timeTo = null;
   
   @Override
   AbstractParser getParser(final Iterator<String> iter) {
@@ -58,8 +72,20 @@ public class Parameters extends AbstractParameters {
   @Override
   void init() {
     srcList.clear();
+    timeTo = null;
+    timeFrom = null;
+    timeFormatter = null;
     outputPath = null;
+    timeToStr = null;
+    timeFromStr = null;
     timeZone = null;
+  }
+  
+  @Override
+  void fillOther() {
+    timeFormatter = BASE_TIME_FORMATTER.withZone(getTimeZone());
+    timeFrom = timeFromStr != null ? timeFormatter.parse(timeFromStr, Instant::from) : null;
+    timeTo = timeToStr != null ? timeFormatter.parse(timeToStr, Instant::from) : null;
   }
   
   public List<String> getSrcList() {
@@ -74,6 +100,10 @@ public class Parameters extends AbstractParameters {
     return timeZone != null ? timeZone : ZoneId.systemDefault();
   }
   
+  public DateTimeFormatter getTimeFormatter() {
+    return timeFormatter;
+  }
+  
   static void printUsage() throws IOException {
     System.out.println(
 "Merge several foundationdb trace files into a single file ordered by time\n" +
@@ -81,11 +111,15 @@ public class Parameters extends AbstractParameters {
 "\n" +
 "Options are:\n" +
 "-help              Print this information\n" +
-"-o FileName	   Output to the file specified. \"-o -\" means the standard output (default)\n" +
+"-from DateTime     Print only the log contents with the time greater or equal to the specified time.\n" +
+"                   The time must be in the format \"yyyy-MM-dd HH:mm:ss[.SSSSSS]\" and includer in quotas.\n" +
+"-to DateTime       Print only the log contents with the time less than the specified time.\n" +
+"                   The time must be in the format \"yyyy-MM-dd HH:mm:ss[.SSSSSS]\" and includer in quotas.\n" +
+"-o FileName	    Output to the file specified. \"-o -\" means the standard output (default)\n" +
 "-tz TimeZoneName   Print the time with the specified timezone. \n" +
 "                   see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones\n" +
-"		   for the list of timezone names supported\n" +
-"		   By default, uses the local timezone\n" +
+"		    for the list of timezone names supported\n" +
+"		    By default, uses the local timezone\n" +
 "\n" +
 "Files-or-directories - a list of pathes.\n" +
 "  If the path represents a file, then FdbTraceMerger considers this file as a fdb trace.\n" +

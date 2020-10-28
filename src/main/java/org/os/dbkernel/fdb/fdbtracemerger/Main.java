@@ -49,11 +49,11 @@ public class Main {
 	if (Files.isDirectory(p)) {
 	  try (DirectoryStream<Path> filesStream = Files.newDirectoryStream(Paths.get(srcName), "trace.*.xml")) {
 	    for (Path entry: filesStream) {
-	      parsers.add(new FdbTraceParser(entry));
+	      parsers.add(new FdbTraceParser(entry, prms));
 	    }
 	  }
 	} else {
-	  parsers.add(new FdbTraceParser(p));
+	  parsers.add(new FdbTraceParser(p, prms));
 	}
       }
 
@@ -63,7 +63,12 @@ public class Main {
 	final MergeSortedIterator<TraceEntry> resIter 
 	  = new MergeSortedIterator(parsers.toArray(new FdbTraceParser[parsers.size()]));
 
-	fmtr.process(prms, resIter);
+	fmtr.setup(prms);
+	try {
+	  fmtr.process(resIter);
+	} finally {
+	  fmtr.cleanup();
+	}
       } else {
 	System.err.println("No tracefiles have been found");
 	rc = 1;
